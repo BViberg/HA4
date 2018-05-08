@@ -29,18 +29,35 @@ function [xs, Ps] = nonLinRTSSupdate(xs_kplus1, ...
 
 switch type
     case 'EKF'
-        [fxhat,Fxhat]=f(xf_k);
-        G = Pf_k*Fxhat'/Pp_kplus1; 
-        xs = xf_k+G*(xp_kplus1-fxhat);
+        [fxhat,Fxhat]=f(xf_k,T);
+        G = Pf_k*Fxhat'/Pp_kplus1;
+        xs = xf_k+G*(xs_kplus1-fxhat);
         Ps = Pf_k-G*(Pp_kplus1-Ps_kplus1)*G';
         
     case 'UKF'
-        
+        [SP,W] = sigmaPoints(xf_k, Pf_k, type);
+        n=size(SP,1);
+        Pkkplus1 = zeros(n);
+        for i=1:size(SP,2)
+            [fx,~]=f(SP(:,i),T);
+            Pkkplus1=Pkkplus1+(SP(:,i)-xf_k)*(fx-xp_kplus1)'*W(i);
+        end
+        G=Pkkplus1/Pp_kplus1;
+        xs=xf_k+G*(xs_kplus1-xp_kplus1);
+        Ps= Pf_k-G*(Pp_kplus1-Ps_kplus1)*G';
     case 'CKF'
-            
-    
+        [SP,W] = sigmaPoints(xf_k, Pf_k, type);
+        n=size(SP,1);
+        Pkkplus1 = zeros(n);
+        for i=1:size(SP,2)
+            [fx,~]=f(SP(:,i),T);
+            Pkkplus1=Pkkplus1+(SP(:,i)-xf_k)*(fx-xp_kplus1)'*W(i);
+        end
+        G=Pkkplus1/Pp_kplus1;
+        xs=xf_k+G*(xs_kplus1-xp_kplus1);
+        Ps= Pf_k-G*(Pp_kplus1-Ps_kplus1)*G';
     otherwise
         error('Invalid type')
 end
-        
+
 end
